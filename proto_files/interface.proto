@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package helloworld;
+
+option go_package = "./protobuf";
+
+service ReturnResultFromWorker {
+  rpc ReturnResult (Result) returns (Empty) {}
+  rpc RequestFromClient (Request) returns (Result) {}
+}
+
+message Request {
+  string from = 1;
+  string to = 2;
+  string lang = 3;
+  bool titles = 4;
+}
+
+message Result {
+  int32 length = 1;
+  repeated string path = 2;
+  int32 id = 3;
+}
+
+message Empty {
+}
