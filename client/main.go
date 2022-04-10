@@ -33,23 +33,35 @@ func main() {
 
 	// Set up a connection to the server.
 	fmt.Println("addr:", addr)
-	conn1, err := grpc.Dial(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		log.Fatalf("did not connect: %v", err)
+
+	for {
+		var conn1 *grpc.ClientConn
+		var err error
+		for {
+			conn1, err = grpc.Dial(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+			if err != nil {
+				log.Printf("did not connect: %v", err)
+				time.Sleep(2 * time.Second)
+				continue
+			}
+			defer conn1.Close()
+			break
+		}
+
+		c := protobuf.NewReturnResultFromWorkerClient(conn1)
+
+		ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+		defer cancel()
+
+		fmt.Println("Waiting for result...")
+		res, err := c.RequestFromClient(ctx, &protobuf.Request{From: from, To: to, Lang: lang, Titles: titles})
+
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "grpc error", err)
+			time.Sleep(2 * time.Second)
+		} else {
+			fmt.Println("Got result:", res.Length, res.Path)
+			break
+		}
 	}
-	defer conn1.Close()
-	c := protobuf.NewReturnResultFromWorkerClient(conn1)
-
-	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
-	defer cancel()
-
-	fmt.Println("Waiting for result...")
-	res, err := c.RequestFromClient(ctx, &protobuf.Request{From: from, To: to, Lang: lang, Titles: titles})
-
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "grpc error", err)
-		return
-	}
-
-	fmt.Println("Got result:", res.Length, res.Path)
 }

@@ -118,7 +118,7 @@ func main() {
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err, "Failed to connect to RabbitMQ")
 
-			time.Sleep(time.Second)
+			time.Sleep(2 * time.Second)
 
 			continue
 		}
